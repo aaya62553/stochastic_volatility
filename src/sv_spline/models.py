@@ -46,6 +46,14 @@ class SVModel(ABC):
         log_likelihood, _, _ = bootstrap_filter(y_centered, sigma, initial_mean, initial_std, m_h, M, resampling=resampling, rng=rng)
         return log_likelihood
 
+    def run_filter(self, params, M, rng, resampling="multinomial"):
+        y_centered = self.compute_y_centered(params)
+        sigma = self.sigma(params)
+        m_h = self.transition(params)
+        initial_mean, initial_std = self.initial_distribution(params)
+        log_likelihood, increments, h = bootstrap_filter(y_centered, sigma, initial_mean, initial_std, m_h, M, resampling=resampling, rng=rng)
+        return log_likelihood, increments, h
+
 class BasicSV(SVModel):
 
     def is_valid(self,params):
