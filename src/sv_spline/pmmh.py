@@ -1,5 +1,6 @@
 from .models import SVModel
 import numpy as np
+from tqdm import tqdm
 
 def run_pmmh(model : SVModel, initial_params, blocks, n_warmup, n_iter, M, resampling = "multinomial", rng=None, verbose=False):
     if rng is None:
@@ -18,7 +19,7 @@ def run_pmmh(model : SVModel, initial_params, blocks, n_warmup, n_iter, M, resam
     if verbose:
         print("Initial log probability:", log_prior + log_likelihood)
     
-    for it in range(n_warmup + n_iter):
+    for it in tqdm(range(n_warmup + n_iter), desc="PMMH"):
         for idx, block in enumerate(blocks):
             candidate = block.propose(params, rng)
             log_prior_candidate = model.log_prior(candidate)

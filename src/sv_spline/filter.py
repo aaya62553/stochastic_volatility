@@ -1,12 +1,11 @@
 import numpy as np
 
-def resample_particles_multinomial(particles, weights, rng = np.random.default_rng()):
+def resample_particles_multinomial(particles, weights, rng):
     return rng.choice(particles, size=len(particles), p=weights)
 
-def resample_particles_systematic(particles, weights, rng = np.random.default_rng()):
+def resample_particles_systematic(particles, weights, rng):
     N = len(particles)
     positions = (rng.random() + np.arange(N)) / N
-    indexes = np.zeros(N, 'i')
     cumulative_sum = np.cumsum(weights)
     cumulative_sum[-1] = 1.  # avoid round-off errors
     indexes = np.searchsorted(cumulative_sum, positions, side='right', sorter=None)

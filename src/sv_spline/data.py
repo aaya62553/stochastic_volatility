@@ -7,7 +7,7 @@ def load_data(path,scale=1.0):
     df['Date'] = pd.to_datetime(df['Date'])
     df.index = pd.to_datetime(df['Date'])
     df['Returns'] = df['Close'].pct_change() * scale
-    df['Log Returns'] = np.log(df['Close']).diff()
+    df['Log Returns'] = np.log(df['Close']).diff() + np.log(scale)
     df = df[df["Date"]>="2014-01-01"]
     df = df.dropna().reset_index(drop=True)
     return df

@@ -23,4 +23,4 @@ def data_generating_process(alpha=0.01,beta=0.9, sigma_w=0.25, phi=0.7, T=1000, 
         h[t+1] = mh_simu(h[t])  + w[t]*sigma_w
     y[T-1] = alpha+beta*x[T-1] + np.exp(h[T-1]/2)*v[T-1]
 
-    return y, h, x
+    return y, h, x, mh_simu

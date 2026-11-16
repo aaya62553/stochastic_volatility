@@ -47,7 +47,7 @@ def plot_trace(pmmh_results):
     for i, param in enumerate(parameters_history):
         if param == 'g':
             continue
-        plt.subplot(rows, cols, i + 1)
+        plt.subplot(rows, cols, j + 1)
         plt.plot(parameters_history[param], label=param)
         plt.title(f'Trace of {param}')
         plt.xlabel('Iteration')

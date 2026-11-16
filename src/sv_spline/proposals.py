@@ -71,6 +71,6 @@ class Composite(Proposal):
             log_q += proposal.log_q_ratio(current, candidate)
         return log_q
 
-    def adapt(self, params, rng):
+    def adapt(self, params, accepted):
         for proposal in self.proposals:
-            proposal.adapt(params, rng)
+            proposal.adapt(params, accepted)
