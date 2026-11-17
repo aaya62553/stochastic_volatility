@@ -29,11 +29,13 @@ class SVModel(ABC):
     def sigma(self,params):
         return np.sqrt(np.exp(params['log_sigma2']))
 
-    def compute_y_centered(self,params):
-        if self.x is not None:
-            y_centered = self.y - (params['alpha'] + params['beta'] * self.x)
+    def compute_y_centered(self,params, y=None, x=None):
+        if y is None:y = self.y
+        if x is None:x = self.x
+        if x is not None:
+            y_centered = y - (params['alpha'] + params['beta'] * x)
         else:
-            y_centered = self.y - params['alpha']
+            y_centered = y - params['alpha']
         return y_centered
 
     def log_likelihood(self, params, M, rng, resampling="multinomial"):
@@ -43,16 +45,16 @@ class SVModel(ABC):
         sigma = self.sigma(params)
         m_h = self.transition(params)
         initial_mean, initial_std = self.initial_distribution(params)
-        log_likelihood, _, _ = bootstrap_filter(y_centered, sigma, initial_mean, initial_std, m_h, M, resampling=resampling, rng=rng)
+        log_likelihood, _, _,_ = bootstrap_filter(y_centered, sigma, initial_mean, initial_std, m_h, M, resampling=resampling, rng=rng)
         return log_likelihood
 
-    def run_filter(self, params, M, rng, resampling="multinomial"):
-        y_centered = self.compute_y_centered(params)
+    def run_filter(self, params, M, rng, resampling="multinomial", y=None, x=None):
+        y_centered = self.compute_y_centered(params, y=y, x=x)
         sigma = self.sigma(params)
         m_h = self.transition(params)
         initial_mean, initial_std = self.initial_distribution(params)
-        log_likelihood, increments, h = bootstrap_filter(y_centered, sigma, initial_mean, initial_std, m_h, M, resampling=resampling, rng=rng)
-        return log_likelihood, increments, h
+        log_likelihood, increments, h, pit = bootstrap_filter(y_centered, sigma, initial_mean, initial_std, m_h, M, resampling=resampling, rng=rng)
+        return log_likelihood, increments, h, pit
 
 class BasicSV(SVModel):
 
@@ -76,7 +78,7 @@ class BasicSV(SVModel):
         return mean, std
 
 class SemiparametricSV(SVModel):
-    def __init__(self, y, x, knots, lam, initial_mean, initial_std):
+    def __init__(self, y, knots, lam, initial_mean, initial_std, x=None):
         super().__init__(y, x)
         self.knots = knots
         self.K = K_gen(knots)

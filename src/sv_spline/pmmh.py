@@ -41,7 +41,7 @@ def run_pmmh(model : SVModel, initial_params, blocks, n_warmup, n_iter, M, resam
                 if it < n_warmup:
                     block.adapt(params, False)
         if verbose and (it + 1) % 500 == 0:
-            print(f"Iteration {it + 1}/{n_warmup + n_iter}, Log probability: {log_prior + log_likelihood}")
+            print(f"Iteration {it + 1}/{n_warmup + n_iter}, Log probability: {log_prior + log_likelihood}, Acceptance rates: {acceptance_rates}")
         params_history.append(params)
         ll_history.append(log_likelihood)
     new_params_history = {}

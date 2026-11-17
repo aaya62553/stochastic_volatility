@@ -7,8 +7,15 @@ from sv_spline.simulation import data_generating_process
 from sv_spline.pmmh import run_pmmh
 from sv_spline.proposals import RandomWalk, Composite, GProposal
 from sv_spline.models import BasicSV, SemiparametricSV
-from sv_spline.diagnostics import pmmh_summary, acceptance_rates_summary, plot_trace, posterior_params,imse, compare_plot_mh, plot_mh_band
+from sv_spline.diagnostics import *
 from sv_spline.spline import knots_gen
+
+N_WARMUP = 500
+N_ITER = 1000
+M = 1000
+SAVE_RESULTS = True
+SAVE_PATH = "results/simulation_single/"
+
 
 if __name__ == "__main__":
 
@@ -49,9 +56,9 @@ if __name__ == "__main__":
                                               'log_sigma2': -2.0, 'phi': 0.9, 
                                               'mu': mu_init},
                               blocks=blocks,
-                              n_warmup=500,
-                              n_iter=1000,
-                              M=1000,
+                              n_warmup=N_WARMUP,
+                              n_iter=N_ITER,
+                              M=M,
                               resampling="multinomial",
                               rng=rng,
                               verbose=True)
@@ -88,45 +95,73 @@ if __name__ == "__main__":
                               initial_params={'alpha': alpha_init, 'beta': beta_init, 
                                               'log_sigma2': log_sigma2_init, 'g': g_init},
                               blocks=blocks_semi,
-                              n_warmup=500,
-                              n_iter=1000,
-                              M=3000,
+                              n_warmup=N_WARMUP,
+                              n_iter=N_ITER,
+                              M=M,
                               resampling="multinomial",
                               rng=rng,
                               verbose=True)
 
  # Save results
-  if os.path.exists('results/') == False:
-      os.makedirs('results/')
+  if SAVE_RESULTS:
+    if os.path.exists(SAVE_PATH) == False:
+        os.makedirs(SAVE_PATH)
 
-  data_to_save = {
-      'y': y,
-      'h': h,
-      'x': x,
-      'res_basic': basic_pmmh_results,
-      'res_semi': semi_pmmh_results,}
+    data_to_save = {
+        'y': y,
+        'h': h,
+        'x': x,
+        'res_basic': basic_pmmh_results,
+        'res_semi': semi_pmmh_results,}
 
-  with open('results/simulation_single_results.pkl', 'wb') as f:
-      pickle.dump(data_to_save, f)
+    with open(SAVE_PATH + 'simulation_single_results.pkl', 'wb') as f:
+        pickle.dump(data_to_save, f)
 
 
 
   # Resultats Basic SV
   print("Summary Basic SV:", pmmh_summary(basic_pmmh_results))
   print("Acceptance rates Basic SV:", acceptance_rates_summary(basic_pmmh_results))
-  plot_trace(basic_pmmh_results)
+
+  plot_data(basic_pmmh_results, y=y, x=x, save_path=SAVE_PATH + "data_basic.png")
+  plot_trace(basic_pmmh_results, save_path=SAVE_PATH + "trace_basic.png")
+
   print("Final parameter estimates Basic SV:",post)
+
   print("IMSE Basic SV:",imse(basic_pmmh_results, mh_true=mh_simu, h_true=h))
+  pit_basic = compute_pit(basic_pmmh_results)
+  lb_test_basic, lb_test_sq_basic = ljungbox(pit_basic, lags=[5,10])
+  print("Ljung-Box test for residuals of Basic SV model:")
+  print(lb_test_basic)
+  print("Ljung-Box test for squared residuals of Basic SV model:")
+  print(lb_test_sq_basic)
+  
+  plot_pit(pit_basic, save_path=SAVE_PATH + "pit_basic.png")
 
   # Resultats Semiparametric SV
   print("Summary Semiparametric SV:", pmmh_summary(semi_pmmh_results))
   print("Acceptance rates Semiparametric SV:", acceptance_rates_summary(semi_pmmh_results))
-  plot_trace(semi_pmmh_results)
+  plot_data(semi_pmmh_results, y=y, x=x, save_path=SAVE_PATH + "data_semi.png")
+  plot_trace(semi_pmmh_results, save_path=SAVE_PATH + "trace_semi.png")
+  
   print("Final parameter estimates Semiparametric SV:", posterior_params(semi_pmmh_results))
+  
   print("IMSE Semiparametric SV:", imse(semi_pmmh_results, mh_true=mh_simu, h_true=h))
+  pit_semi = compute_pit(semi_pmmh_results)
 
-  compare_plot_mh(basic_pmmh_results, semi_pmmh_results, mh_true=mh_simu, rng=rng)
-  plot_mh_band(semi_pmmh_results, rng=rng)
+  lb_test_semi, lb_test_sq_semi = ljungbox(pit_semi, lags=[5,10])
+  print("Ljung-Box test for residuals of Semiparametric SV model:")
+  print(lb_test_semi)
+  print("Ljung-Box test for squared residuals of Semiparametric SV model:")
+  print(lb_test_sq_semi)
+  
+  plot_pit(pit_semi, save_path=SAVE_PATH + "pit_semi.png")
 
+  compare_plot_mh(basic_pmmh_results, semi_pmmh_results, mh_true=mh_simu, rng=rng, save_path=SAVE_PATH + "compare_mh.png")
+  plot_mh_band(semi_pmmh_results, rng=rng, save_path=SAVE_PATH + "mh_band_semi.png")
+  comparaison_oos = compare_oos(basic_pmmh_results, semi_pmmh_results, y_full=y, x_full=x, T_train=800, seed=42)
+  print("Out-of-Sample Comparison:")
+  print(comparaison_oos)
+  comparaison_oos.to_csv(SAVE_PATH + "oos_comparison.csv", index=False)
 
  
